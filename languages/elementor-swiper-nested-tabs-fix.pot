@@ -1,0 +1,15 @@
+# Copyright (C) 2026 Stephen J. Kinzey
+# This file is distributed under the MIT license.
+msgid ""
+msgstr ""
+"Project-Id-Version: Elementor Nested Tabs Swiper Drag Fix 1.0.1\n"
+"Report-Msgid-Bugs-To: https://github.com/SteveKinzey/elementor-swiper-nested-tabs-fix/issues\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Elementor Nested Tabs Swiper Drag Fix:"
+msgstr ""
+
+msgid "Elementor is not active, so this plugin is doing nothing."
+msgstr ""

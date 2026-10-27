@@ -1,104 +1,72 @@
-# Elementor Swiper Nested Tabs Fix
+# Elementor Nested Tabs Swiper Drag Fix
 
-A focused compatibility project for troubleshooting and correcting Swiper slider behavior inside nested Elementor tabs.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![WordPress 5.0+](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)
+![PHP 7.4+](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)
+![Elementor 4.2.0–4.3.4](https://img.shields.io/badge/Elementor-4.2.0%E2%80%934.3.4-orange.svg)
 
-## Overview
+Restores drag/swipe on Swiper-based carousels (Loop Carousel, Image Carousel, Nested Carousel, etc.) placed inside **Elementor Nested Tabs**. Arrows and pagination keep working after a tab switch; drag does not. This plugin fixes that.
 
-Elementor layouts can combine tabbed content with carousels powered by [Swiper](https://swiperjs.com/). When a slider is initialized while its parent tab is hidden, its container dimensions may not yet be measurable. Depending on the Elementor and Swiper versions and the widget configuration, this can produce incorrect slide widths, clipped content, misplaced navigation, or a carousel that does not respond correctly until the layout changes.
+**Status (2026-10-27):** still unfixed upstream as of Elementor Core 4.3.4 / Pro 4.3.2. Regression was introduced between Core 4.1.5 and 4.2.0.
 
-This repository is intended to house a targeted fix for that class of issue, without modifying Elementor core files.
+## The bug
 
-> **Project status:** The fix's implementation, packaging, and supported versions have not yet been documented in this repository. The behavior described below is the intended scope, not a claim of verified functionality.
+Swiper binds its touch/pointer drag listeners once at init to a stored element reference. Nested Tabs' show/hide cycle leaves those bindings stale on every non-initial panel. `swiper.update()` recalculates layout but never rebinds events, so it can't repair it.
 
-## Problem symptoms
+## The fix
 
-Common symptoms worth investigating include:
+On `elementor/nested-tabs/activate`, for each `.swiper` in the activated panel:
 
-- A carousel looks correct in the first visible tab but breaks in another tab.
-- Slides are too wide, too narrow, overlapping, or partially hidden after switching tabs.
-- Navigation or pagination appears out of sync with the active slides.
-- The carousel corrects itself only after resizing the window.
-- Nested tabs work in the editor but behave differently on the published page.
+1. `detachEvents()` → `attachEvents()` → `update()` (cheap, usually enough)
+2. Fallback: `destroy(true, false)` and re-init with `observer: true` / `observeParents: true`
 
-These symptoms can also result from CSS, caching, script optimization, or conflicting plugins. They are not, by themselves, proof of a Swiper initialization problem.
+A version guard (`MAX_BROKEN_VERSION` in `assets/js/fix.js`) makes the plugin a no-op on Elementor versions newer than the last one confirmed broken, so it retires itself once an official fix lands.
 
-## Intended approach
+## Install
 
-A robust fix should:
+**Zip (recommended)**
+1. Download the latest zip from [Releases](https://github.com/SteveKinzey/elementor-swiper-nested-tabs-fix/releases)
+2. WordPress → Plugins → Upload Plugin → Activate
 
-1. Detect when the relevant Elementor tab becomes visible.
-2. Locate Swiper instances associated with sliders inside that tab.
-3. Wait until the tab's content can be measured.
-4. Recalculate the affected instance's size and layout through supported Swiper APIs.
-5. Avoid repeatedly initializing sliders, affecting unrelated instances, or introducing duplicate event listeners.
-
-When nested tabs are involved, the implementation must account for both parent and child visibility changes.
-
-## Installation
-
-Installation instructions will be added once the implementation and its distribution format have been confirmed.
-
-Do **not** assume this repository is a ready-to-install WordPress plugin or paste an unreviewed script into a production website.
-
-For development, clone the repository:
-
+**Git**
 ```bash
+cd wp-content/plugins
 git clone https://github.com/SteveKinzey/elementor-swiper-nested-tabs-fix.git
-cd elementor-swiper-nested-tabs-fix
 ```
+Then activate in WordPress.
 
-Review the available files and commits before deploying any code.
+**No plugin? Use the snippet.** Paste `assets/js/fix.js` wrapped in `<script>` tags into Elementor → Custom Code, Location `</body>` End, Display Conditions: Entire Site.
 
-## Verification checklist
+**Purge page/JS cache before testing.** A stale bundle is the #1 reason this appears not to work.
 
-Test against the specific Elementor, Elementor Pro (if installed), WordPress, and Swiper versions used by the target site.
+## Verify
 
-- [ ] The carousel displays correctly in the initially visible tab.
-- [ ] Switching between tabs preserves correct slide sizing and positioning.
-- [ ] Nested parent/child tab changes work in both directions.
-- [ ] Navigation, pagination, autoplay, and breakpoints behave as configured.
-- [ ] Repeated tab changes do not create duplicate instances or listeners.
-- [ ] Layout works on desktop, tablet, and mobile.
-- [ ] The browser console shows no new JavaScript errors.
-- [ ] Unrelated Elementor sliders remain unaffected.
-- [ ] Behavior is rechecked with page caching and script optimization enabled.
-
-## Troubleshooting
-
-**Slider only fixes itself after a browser resize:** Investigate whether Swiper is calculating its dimensions before the tab becomes visible.
-
-**Problem occurs only on the live site:** Compare editor and front-end script loading, cache output, deferred JavaScript, and optimization settings.
-
-**Some sliders work and others do not:** Check each widget's markup, initialization timing, and the active tab hierarchy.
-
-**A fix stops working after an update:** Check Elementor's rendered markup and the Swiper API available in the installed release before changing selectors or event handling.
+1. Page with Nested Tabs, a Swiper carousel in at least two panels
+2. Switch to tab 2 → drag the carousel → it moves
+3. Without the plugin, step 2 fails; arrows/dots still work
 
 ## Compatibility
 
-Compatibility has **not yet been verified** against specific WordPress, Elementor, Elementor Pro, or Swiper releases. Record tested versions and known limitations as implementation and testing progress.
+| | Tested |
+|---|---|
+| Elementor Core | 4.2.0 – 4.3.4 |
+| Elementor Pro | 4.2.0 – 4.3.2 |
+| WordPress | 5.0+ |
+| PHP | 7.4+ |
+| Swiper | 8.x, 9.x |
+
+## Maintenance
+
+When a new Elementor release ships, re-test. Still broken → bump `MAX_BROKEN_VERSION` and cut a release. Fixed → add a deprecation note here; the guard already disables the plugin on that version.
+
+Known caveat: Loop Carousel is a Pro widget but the guard reads the Core version. A one-release overlap is harmless (the repair is idempotent).
 
 ## Contributing
 
-Issues and pull requests are welcome. For reproducible bug reports, include:
-
-- WordPress, Elementor, Elementor Pro, and browser versions.
-- The slider widget and nested tab structure being used.
-- Expected and actual behavior.
-- Steps to reproduce the issue.
-- Relevant console errors and a minimal reproduction, if available.
-
-Avoid including credentials, personal information, or private site data.
-
-## Maintainer
-
-**Stephen J. Kinzey, Ph.D.**  
-[SK America LLC](https://sk-america.com/)  
-[GitHub: @SteveKinzey](https://github.com/SteveKinzey)
+Open an [issue](https://github.com/SteveKinzey/elementor-swiper-nested-tabs-fix/issues) with WordPress, Elementor Core and Pro versions, steps, and a console screenshot if there are errors.
 
 ## License
 
-No license has been declared in this repository. A license should be added before representing the code as open-source or specifying reuse rights.
+MIT — see [LICENSE](LICENSE).
 
----
-
-*Elementor and Swiper are trademarks or product names of their respective owners. This is an independent project and is not an official Elementor or Swiper release.*
+Not affiliated with Elementor. Community workaround for an upstream regression.
