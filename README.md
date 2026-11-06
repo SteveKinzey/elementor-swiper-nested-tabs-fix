@@ -7,7 +7,7 @@
 
 Restores drag/swipe on Swiper-based carousels (Loop Carousel, Image Carousel, Nested Carousel, etc.) placed inside **Elementor Nested Tabs**. Arrows and pagination keep working after a tab switch; drag does not. This plugin fixes that.
 
-**Status (2026-10-27):** still unfixed upstream as of Elementor Core 4.3.4 / Pro 4.3.2. Regression was introduced between Core 4.1.5 and 4.2.0.
+**Status (2026-11-05):** still unfixed upstream as of Elementor Core 4.3.4 / Pro 4.3.2. Regression was introduced between Core 4.1.5 and 4.2.0. Tracked upstream at [elementor/elementor#38057](https://github.com/elementor/elementor/issues/38057).
 
 ## The bug
 
